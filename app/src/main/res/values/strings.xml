@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">MyNotes28Feb</string>
+    <string name="action_list">List</string>
+    <string name="action_info">Info</string>
 </resources>
