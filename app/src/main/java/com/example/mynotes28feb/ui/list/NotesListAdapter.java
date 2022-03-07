@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mynotes28feb.R;
@@ -21,13 +22,51 @@ import java.util.Locale;
 
 public class NotesListAdapter extends RecyclerView.Adapter<NotesListAdapter.NoteViewHolder> {
 
+    public OnNoteClicked getOnNoteClicked() {
+        return onNoteClicked;
+    }
+
+    public void setOnNoteClicked(OnNoteClicked onNoteClicked) {
+        this.onNoteClicked = onNoteClicked;
+    }
+
+
+
+
+    interface OnNoteClicked {
+        void onNoteClicked(Note note);
+
+        void onNoteLongClicked(Note note, int position);
+    }
+
     private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
 
-    private List<Note> data = new ArrayList<>();
+    private Fragment fragment;
+
+    private final List<Note> data = new ArrayList<>();
+
+    private OnNoteClicked onNoteClicked;
+
+    public NotesListAdapter(Fragment fragment) {
+        this.fragment = fragment;
+    }
 
     public void setData(Collection<Note> toSet) {
         data.clear();
         data.addAll(toSet);
+    }
+
+    public int addItem(Note toAdd) {
+        data.add(toAdd);
+        return data.size() - 1;
+    }
+
+    public void removeItem(int selectedNoteIndex) {
+        data.remove(selectedNoteIndex);
+    }
+
+    public void updateItem(Note note, int selectedNoteIndex) {
+        data.set(selectedNoteIndex, note);
     }
 
     @Override
@@ -51,7 +90,7 @@ public class NotesListAdapter extends RecyclerView.Adapter<NotesListAdapter.Note
 
         holder.title.setText(item.getTitle());
         holder.content.setText(item.getContent());
-        holder.data.setText(simpleDateFormat.format(item.getCreatedAt()));
+        holder.date.setText(simpleDateFormat.format(item.getCreatedAt()));
 
     }
 
@@ -65,15 +104,48 @@ public class NotesListAdapter extends RecyclerView.Adapter<NotesListAdapter.Note
 
         TextView title;
         TextView content;
-        TextView data;
+        TextView date;
 
         public NoteViewHolder(@NonNull View itemView) {
             super(itemView);
 
+            View card = itemView.findViewById(R.id.card);
+
+            fragment.registerForContextMenu(card);
+
+            card.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (getOnNoteClicked() != null) {
+
+                        int clickedAt = getAdapterPosition();
+
+                        getOnNoteClicked().onNoteClicked(data.get(clickedAt));
+                    }
+                }
+            });
+
+            card.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+
+                    if (getOnNoteClicked() != null) {
+
+                        int clickedAt = getAdapterPosition();
+
+                        getOnNoteClicked().onNoteLongClicked(data.get(clickedAt), clickedAt);
+                    }
+
+                    view.showContextMenu();
+
+                    return true;
+                }
+            });
+
 
             title = itemView.findViewById(R.id.title);
             content = itemView.findViewById(R.id.content);
-            data = itemView.findViewById(R.id.data);
+            date = itemView.findViewById(R.id.data);
         }
     }
 }
